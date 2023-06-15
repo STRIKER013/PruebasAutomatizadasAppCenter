@@ -1,0 +1,50 @@
+version: '3.1'
+
+networks:
+  tdd_tests:
+    external: false
+
+services:
+  appcenter_tests:
+    image: appcenter_tests:0.0.1
+    container_name: appcenter-tests
+    build: .
+    restart: always
+    environment:
+      - DB_HOST=mongodb://root:root@mongo:27017/tests
+    networks:
+      - tdd_tests
+    depends_on:
+      - mongo
+    
+  mongo:
+    image: mongo:7.0.0-rc2
+    restart: always
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: tests
+    volumes:
+      - /home/martinez/Documentos/TDD/MongoDB:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - tdd_tests
+
+
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    networks:
+      - tdd_tests
