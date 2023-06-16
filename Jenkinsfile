@@ -1,30 +1,51 @@
-node {
-  stage('Github') {
-    checkout scm
-  }
-  stage('Create virtual env'){
-    sh '''IMAGE_NAME="test-image"
-          echo "Check current working directory"
-          pwd
-          echo "Build docker image and run container"
-          docker build -t $IMAGE_NAME -f Dockerfile.test .
-          docker run -d --name test-container -e DB_HOST=mongodb+srv://jhonatan:D8JNwKf1bsO2kJtL@estudio.evopu.mongodb.net/tests $IMAGE_NAME'''
-  }
-  stage('SonarQube Analysis') {
-    def scannerHome = tool 'SonarScanner';
-    withSonarQubeEnv() {
-      sh "${scannerHome}/bin/sonar-scanner"
+pipeline { 
+    agent any
+    stages {
+        
+        stage('Prerequisites') {
+            steps {
+                script {
+                    sh 'pip install -r requirements.txt'
+                }
+            }
+        }
+
+        stage('GitHub Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/STRIKER013/PruebasAutomatizadasAppCenter.git'
+            }
+        }
+
+        stage('SonarQube Test') {
+            steps {
+                withSonarQubeEnv('SonarQubeTest') {
+                    script {
+                        scannerHome = tool 'nombreToolDelScanner';
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=<nombreProjectoSonar> -Dsonar.sources=. -Dsonar.host.url=http://<host> -Dsonar.login=sqp_<token>"
+                    }
+                }
+            }
+        }
+
+        stage('API testing') {
+            steps {
+                script{
+                    sh '/var/jenkins_home/.local/bin/pytest <reporte.txt>' //<nombre archivo de reporte>
+                }
+            }
+        }
+
+        stage('Report Finally') {
+            steps {
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '.',
+                    reportFiles: '<reporteFinal.txt>',
+                    reportName: 'API Test Report'
+                ])
+            }
+        }
     }
-  }
-  stage('API Testing'){
-    sh '''CONTAINER_NAME="test-container"
-          rm -rf reports; mkdir reports
-          docker stop $CONTAINER_NAME
-          docker cp $CONTAINER_NAME:/code/result.txt reports/'''
-  }
-  stage('Clear'){
-    sh '''docker rm test-container
-          docker rmi test-image'''
-    // cleanWs()
-  }
 }
