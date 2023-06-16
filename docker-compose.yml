@@ -6,14 +6,14 @@ networks:
 
 services:
   appcenter_tests:
-    image: appcenter_tests:0.0.1
-    container_name: appcenter-tests
+    image: appcenter_test:0.0.1
+    container_name: appcenter-test
     build: .
     restart: always
     environment:
-      - DB_HOST=mongodb://root:root@mongo:27017/tests
+      - DB_HOST=mongodb://root:root@mongo:27017/test
     networks:
-      - tdd_tests
+      - tdd_test
     depends_on:
       - mongo
     
@@ -26,11 +26,11 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: root
       MONGO_INITDB_DATABASE: tests
     volumes:
-      - /home/martinez/Documentos/TDD/MongoDB:/data/db
+      - /home/elpil/Documentos/TDD/MongoDB:/data/db
     ports:
       - 27017:27017
     networks:
-      - tdd_tests
+      - tdd_test
 
 
   mongo-express:
@@ -47,4 +47,4 @@ services:
       ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
       ME_CONFIG_MONGODB_SERVER: mongodb
     networks:
-      - tdd_tests
+      - tdd_test
